@@ -10,6 +10,7 @@ AMainCharacter::AMainCharacter()
 	Camera->SetRelativeLocation(FVector(0, 0, 60));
 	Camera->bUsePawnControlRotation = true;
 
+	GetCharacterMovement()->GetNavAgentPropertiesRef().bCanCrouch = true;
 	GetCharacterMovement()->MaxWalkSpeed = DefaultWalkSpeed;
 
 	PrimaryActorTick.bCanEverTick = true;
@@ -36,11 +37,16 @@ void AMainCharacter::Tick(float DeltaTime)
 void AMainCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
-	Super::SetupPlayerInputComponent(PlayerInputComponent);
 	if (UEnhancedInputComponent* EnhancedInputComponent = CastChecked<UEnhancedInputComponent>(PlayerInputComponent))
 	{
 		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &AMainCharacter::Move);
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &AMainCharacter::Look);
+
+		EnhancedInputComponent->BindAction(RunAction, ETriggerEvent::Started, this, &AMainCharacter::StartRunning);
+		EnhancedInputComponent->BindAction(RunAction, ETriggerEvent::Completed, this, &AMainCharacter::StopRunning);
+
+		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Started, this, &AMainCharacter::StartCrouch);
+		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Completed, this, &AMainCharacter::StopCrouch);
 	}
 
 }
@@ -69,5 +75,43 @@ void AMainCharacter::Look(const FInputActionValue& Value)
 		AddControllerYawInput(look_vector.X);
 		AddControllerPitchInput(look_vector.Y);
 	}
+}
+
+void AMainCharacter::StartRunning(const FInputActionValue& Value)
+{
+	if (movement_state == EPlayerMovementState::Walking)
+	{
+		movement_state = EPlayerMovementState::Running;
+		GetCharacterMovement()->MaxWalkSpeed = DefaultRunSpeed;
+	}
+}
+
+void AMainCharacter::StopRunning(const FInputActionValue& Value)
+{
+	if (movement_state == EPlayerMovementState::Running)
+	{
+		movement_state = EPlayerMovementState::Walking;
+		GetCharacterMovement()->MaxWalkSpeed = DefaultWalkSpeed;
+	}
+}
+
+void AMainCharacter::StartCrouch(const FInputActionValue& Value)
+{
+	if (movement_state == EPlayerMovementState::Walking)
+	{
+		movement_state = EPlayerMovementState::Crouching;
+		GetCharacterMovement()->MaxWalkSpeed = DefaultCrouchSpeed;
+		Crouch();
+	}
+}
+
+void AMainCharacter::StopCrouch(const FInputActionValue& Value)
+{
+	if (movement_state == EPlayerMovementState::Crouching)
+	{
+		movement_state = EPlayerMovementState::Walking;
+		GetCharacterMovement()->MaxWalkSpeed = DefaultWalkSpeed;
+	}
+	UnCrouch();
 }
 
