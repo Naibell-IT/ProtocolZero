@@ -26,12 +26,22 @@ void AMainCharacter::BeginPlay()
 			Subsystem->AddMappingContext(DefaultMappingContext, 0);
 		}
 	}
+
+	current_camera_z = default_camera_z = Camera->GetRelativeLocation().Z;
 }
 
 void AMainCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	bool is_running = !GetCharacterMovement()->Velocity.IsZero();
+	targer_camera_z = is_running ? (default_camera_z + RunCameraOffset) : default_camera_z;
+
+	current_camera_z = FMath::FInterpTo(current_camera_z, targer_camera_z, DeltaTime, CameraLeanSpeed);
+
+	FVector new_location = Camera->GetRelativeLocation();
+	new_location.Z = current_camera_z;
+	Camera->SetRelativeLocation(new_location);
 }
 
 void AMainCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -40,6 +50,10 @@ void AMainCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 	if (UEnhancedInputComponent* EnhancedInputComponent = CastChecked<UEnhancedInputComponent>(PlayerInputComponent))
 	{
 		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &AMainCharacter::Move);
+
+		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Started, this, &AMainCharacter::StartMoving);
+		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Completed, this, &AMainCharacter::EndMoving);
+	
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &AMainCharacter::Look);
 
 		EnhancedInputComponent->BindAction(RunAction, ETriggerEvent::Started, this, &AMainCharacter::StartRunning);
@@ -47,6 +61,9 @@ void AMainCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 
 		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Started, this, &AMainCharacter::StartCrouch);
 		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Completed, this, &AMainCharacter::StopCrouch);
+
+		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &AMainCharacter::Jump);
+		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &AMainCharacter::StopJumping);
 	}
 
 }
@@ -63,6 +80,25 @@ void AMainCharacter::Move(const FInputActionValue& Value)
 		const FVector right_direction = FRotationMatrix(yaw_rotation).GetUnitAxis(EAxis::Y);
 		AddMovementInput(forward_direction, move_vector.Y);
 		AddMovementInput(right_direction, move_vector.X);
+	}
+}
+
+void AMainCharacter::StartMoving(const FInputActionValue& Value)
+{
+	if (APlayerController* PC = Cast<APlayerController>(GetController()))
+	{
+		if (movement_state == EPlayerMovementState::Running)
+			ActiveRunShake = PC->PlayerCameraManager->StartCameraShake(RunShakeClass);
+		else
+			ActiveRunShake = PC->PlayerCameraManager->StartCameraShake(WalkShakeClass);
+	}
+}
+
+void AMainCharacter::EndMoving(const FInputActionValue& Value)
+{
+	if (APlayerController* PC = Cast<APlayerController>(GetController()))
+	{
+		PC->PlayerCameraManager->StopAllCameraShakes(true);
 	}
 }
 
@@ -83,6 +119,15 @@ void AMainCharacter::StartRunning(const FInputActionValue& Value)
 	{
 		movement_state = EPlayerMovementState::Running;
 		GetCharacterMovement()->MaxWalkSpeed = DefaultRunSpeed;
+
+		if (APlayerController* PC = Cast<APlayerController>(GetController()))
+		{
+			if (ActiveRunShake && !GetCharacterMovement()->Velocity.IsZero())
+			{
+				PC->PlayerCameraManager->StopCameraShake(ActiveRunShake, true);
+				ActiveRunShake = PC->PlayerCameraManager->StartCameraShake(RunShakeClass);
+			}
+		}
 	}
 }
 
@@ -92,6 +137,16 @@ void AMainCharacter::StopRunning(const FInputActionValue& Value)
 	{
 		movement_state = EPlayerMovementState::Walking;
 		GetCharacterMovement()->MaxWalkSpeed = DefaultWalkSpeed;
+
+		if (APlayerController* PC = Cast<APlayerController>(GetController()))
+		{
+			if (ActiveRunShake)
+			{
+				PC->PlayerCameraManager->StopCameraShake(ActiveRunShake, true); 
+				if (!GetCharacterMovement()->Velocity.IsZero())
+					ActiveRunShake = PC->PlayerCameraManager->StartCameraShake(WalkShakeClass);
+			}
+		}
 	}
 }
 

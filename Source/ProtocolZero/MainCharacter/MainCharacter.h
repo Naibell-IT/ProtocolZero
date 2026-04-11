@@ -50,12 +50,18 @@ public:
 	UInputAction* CrouchAction;
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	UInputAction* RunAction;
+	UPROPERTY(EditDefaultsOnly, Category = "Input")
+	UInputAction* JumpAction;
 public:
 	UPROPERTY(EditDefaultsOnly)
 	UCameraComponent* Camera;
 public:
 	UFUNCTION(BlueprintCallable)
 	void Move(const FInputActionValue& Value);
+	UFUNCTION(BlueprintCallable)
+	void StartMoving(const FInputActionValue& Value);
+	UFUNCTION(BlueprintCallable)
+	void EndMoving(const FInputActionValue& Value);
 	UFUNCTION(BlueprintCallable)
 	void Look(const FInputActionValue& Value);
 	UFUNCTION(BlueprintCallable)
@@ -73,6 +79,23 @@ protected:
 	float DefaultRunSpeed = 650;
 	UPROPERTY(EditDefaultsOnly, Category = "Movement Settings")
 	float DefaultCrouchSpeed = 300;
+
+	UPROPERTY(EditAnywhere, Category = "Camera | Effects")
+	TSubclassOf<UCameraShakeBase> RunShakeClass;
+	UPROPERTY(EditAnywhere, Category = "Camera | Effects")
+	TSubclassOf<UCameraShakeBase> WalkShakeClass;
+
+	UPROPERTY()
+	UCameraShakeBase* ActiveRunShake;
+
+	UPROPERTY(EditAnywhere, Category = "Camera | Effects")
+	float RunCameraOffset = -15.0f;
+
+	UPROPERTY(EditAnywhere, Category = "Camera | Effects")
+	float CameraLeanSpeed = 5.0f;
 private:
 	EPlayerMovementState movement_state;
+	float default_camera_z;
+	float targer_camera_z;
+	float current_camera_z;
 };
