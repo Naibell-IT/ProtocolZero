@@ -15,6 +15,7 @@ AMainCharacter::AMainCharacter()
 
 	PrimaryActorTick.bCanEverTick = true;
 
+	current_stamina = MaxStamina;
 }
 
 void AMainCharacter::BeginPlay()
@@ -42,6 +43,7 @@ void AMainCharacter::Tick(float DeltaTime)
 	FVector new_location = Camera->GetRelativeLocation();
 	new_location.Z = current_camera_z;
 	Camera->SetRelativeLocation(new_location);
+
 }
 
 void AMainCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -57,7 +59,7 @@ void AMainCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &AMainCharacter::Look);
 
 		EnhancedInputComponent->BindAction(RunAction, ETriggerEvent::Started, this, &AMainCharacter::StartRunning);
-		EnhancedInputComponent->BindAction(RunAction, ETriggerEvent::Completed, this, &AMainCharacter::StopRunning);
+		EnhancedInputComponent->BindAction(RunAction, ETriggerEvent::Completed, this, &AMainCharacter::StopRunningAction);
 
 		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Started, this, &AMainCharacter::StartCrouch);
 		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Completed, this, &AMainCharacter::StopCrouch);
@@ -66,6 +68,11 @@ void AMainCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &AMainCharacter::StopJumping);
 	}
 
+}
+
+float AMainCharacter::GetStamina()
+{
+	return current_stamina;
 }
 
 void AMainCharacter::Move(const FInputActionValue& Value)
@@ -115,7 +122,7 @@ void AMainCharacter::Look(const FInputActionValue& Value)
 
 void AMainCharacter::StartRunning(const FInputActionValue& Value)
 {
-	if (movement_state == EPlayerMovementState::Walking)
+	if (movement_state == EPlayerMovementState::Walking && current_stamina >= StaminaConsumptionPerCall)
 	{
 		movement_state = EPlayerMovementState::Running;
 		GetCharacterMovement()->MaxWalkSpeed = DefaultRunSpeed;
@@ -128,10 +135,18 @@ void AMainCharacter::StartRunning(const FInputActionValue& Value)
 				ActiveRunShake = PC->PlayerCameraManager->StartCameraShake(RunShakeClass);
 			}
 		}
+		if (!GetCharacterMovement()->Velocity.IsZero())
+			GetWorldTimerManager().ClearTimer(recovery_stamina_handle);
+		GetWorldTimerManager().SetTimer(consumpt_stamina_handle, this, &AMainCharacter::ConsuptStamina, StaminaConsumptionTimerDelay, true);
 	}
 }
 
-void AMainCharacter::StopRunning(const FInputActionValue& Value)
+void AMainCharacter::StopRunningAction(const FInputActionValue& Value)
+{
+	StopRunning();
+}
+
+void AMainCharacter::StopRunning()
 {
 	if (movement_state == EPlayerMovementState::Running)
 	{
@@ -142,17 +157,19 @@ void AMainCharacter::StopRunning(const FInputActionValue& Value)
 		{
 			if (ActiveRunShake)
 			{
-				PC->PlayerCameraManager->StopCameraShake(ActiveRunShake, true); 
+				PC->PlayerCameraManager->StopCameraShake(ActiveRunShake, true);
 				if (!GetCharacterMovement()->Velocity.IsZero())
 					ActiveRunShake = PC->PlayerCameraManager->StartCameraShake(WalkShakeClass);
 			}
 		}
+		GetWorldTimerManager().ClearTimer(consumpt_stamina_handle);
+		GetWorldTimerManager().SetTimer(recovery_stamina_handle, this, &AMainCharacter::RecoveryStamina, StaminaRecoveryTimerDelay, true);
 	}
 }
 
 void AMainCharacter::StartCrouch(const FInputActionValue& Value)
 {
-	if (movement_state == EPlayerMovementState::Walking)
+	if (movement_state == EPlayerMovementState::Walking && !GetCharacterMovement()->IsFalling())
 	{
 		movement_state = EPlayerMovementState::Crouching;
 		GetCharacterMovement()->MaxWalkSpeed = DefaultCrouchSpeed;
@@ -168,5 +185,22 @@ void AMainCharacter::StopCrouch(const FInputActionValue& Value)
 		GetCharacterMovement()->MaxWalkSpeed = DefaultWalkSpeed;
 	}
 	UnCrouch();
+}
+
+void AMainCharacter::ConsuptStamina()
+{
+	if (current_stamina <= 0)
+		StopRunning();
+	else if (!GetCharacterMovement()->Velocity.IsZero()) current_stamina -= StaminaConsumptionPerCall;
+}
+
+void AMainCharacter::RecoveryStamina()
+{
+	if (current_stamina >= MaxStamina)
+	{
+		GetWorldTimerManager().ClearTimer(recovery_stamina_handle);
+		current_stamina = MaxStamina;
+	}
+	else current_stamina += StaminaRecoveryPerCall;
 }
 

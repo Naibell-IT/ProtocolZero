@@ -40,6 +40,9 @@ public:
 
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 public:
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	float GetStamina();
+public:
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	UInputMappingContext* DefaultMappingContext;
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
@@ -67,7 +70,9 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void StartRunning(const FInputActionValue& Value);
 	UFUNCTION(BlueprintCallable)
-	void StopRunning(const FInputActionValue& Value);
+	void StopRunningAction(const FInputActionValue& Value);
+	UFUNCTION(BlueprintCallable)
+	void StopRunning();
 	UFUNCTION(BlueprintCallable)
 	void StartCrouch(const FInputActionValue& Value);
 	UFUNCTION(BlueprintCallable)
@@ -79,23 +84,41 @@ protected:
 	float DefaultRunSpeed = 650;
 	UPROPERTY(EditDefaultsOnly, Category = "Movement Settings")
 	float DefaultCrouchSpeed = 300;
+	UPROPERTY(EditDefaultsOnly, Category = "Movement Settings")
+	float MaxStamina = 100;
+	UPROPERTY(EditDefaultsOnly, Category = "Movement Settings")
+	float StaminaConsumptionPerCall = 5.f;
+	UPROPERTY(EditDefaultsOnly, Category = "Movement Settings")
+	float StaminaRecoveryPerCall = 5;
+	UPROPERTY(EditDefaultsOnly, Category = "Movement Settings")
+	float StaminaConsumptionTimerDelay = 0.5f;
+	UPROPERTY(EditDefaultsOnly, Category = "Movement Settings")
+	float StaminaRecoveryTimerDelay = 0.5f;
 
-	UPROPERTY(EditAnywhere, Category = "Camera | Effects")
+	UPROPERTY(EditDefaultsOnly, Category = "Camera | Effects")
 	TSubclassOf<UCameraShakeBase> RunShakeClass;
-	UPROPERTY(EditAnywhere, Category = "Camera | Effects")
+	UPROPERTY(EditDefaultsOnly, Category = "Camera | Effects")
 	TSubclassOf<UCameraShakeBase> WalkShakeClass;
 
 	UPROPERTY()
 	UCameraShakeBase* ActiveRunShake;
 
-	UPROPERTY(EditAnywhere, Category = "Camera | Effects")
+	UPROPERTY(EditDefaultsOnly, Category = "Camera | Effects")
 	float RunCameraOffset = -15.0f;
 
-	UPROPERTY(EditAnywhere, Category = "Camera | Effects")
+	UPROPERTY(EditDefaultsOnly, Category = "Camera | Effects")
 	float CameraLeanSpeed = 5.0f;
+
 private:
 	EPlayerMovementState movement_state;
 	float default_camera_z;
 	float targer_camera_z;
 	float current_camera_z;
+	float current_stamina;
+private:
+	FTimerHandle consumpt_stamina_handle;
+	FTimerHandle recovery_stamina_handle;
+	void ConsuptStamina();
+	void RecoveryStamina();
+
 };
