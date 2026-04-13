@@ -10,6 +10,7 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
+#include "QuestSystem.h"
 #include "MainCharacter.generated.h"
 
 class UInputMappingContext;
@@ -58,6 +59,8 @@ public:
 public:
 	UPROPERTY(EditDefaultsOnly)
 	UCameraComponent* Camera;
+	UPROPERTY(EditDefaultsOnly)
+	UQuestSystem* QuestSystemComponent;
 public:
 	UFUNCTION(BlueprintCallable)
 	void Move(const FInputActionValue& Value);

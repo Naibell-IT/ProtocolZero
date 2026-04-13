@@ -16,6 +16,8 @@ AMainCharacter::AMainCharacter()
 	PrimaryActorTick.bCanEverTick = true;
 
 	current_stamina = MaxStamina;
+
+	QuestSystemComponent = CreateDefaultSubobject<UQuestSystem>(TEXT("Quest System"));
 }
 
 void AMainCharacter::BeginPlay()
