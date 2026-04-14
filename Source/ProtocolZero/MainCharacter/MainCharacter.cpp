@@ -18,6 +18,7 @@ AMainCharacter::AMainCharacter()
 	current_stamina = MaxStamina;
 
 	QuestSystemComponent = CreateDefaultSubobject<UQuestSystem>(TEXT("Quest System"));
+	InteractComponent = CreateDefaultSubobject<UInteractComponent>(TEXT("Interact Component"));
 }
 
 void AMainCharacter::BeginPlay()
@@ -68,6 +69,8 @@ void AMainCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &AMainCharacter::Jump);
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &AMainCharacter::StopJumping);
+
+		EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Completed, this, &AMainCharacter::Interact);
 	}
 
 }
@@ -189,6 +192,14 @@ void AMainCharacter::StopCrouch(const FInputActionValue& Value)
 	UnCrouch();
 }
 
+void AMainCharacter::Interact(const FInputActionValue& Value)
+{
+	if (InteractComponent)
+	{
+		InteractComponent->OnInteract();
+	}
+}
+
 void AMainCharacter::ConsuptStamina()
 {
 	if (current_stamina <= 0)
@@ -206,3 +217,12 @@ void AMainCharacter::RecoveryStamina()
 	else current_stamina += StaminaRecoveryPerCall;
 }
 
+void AMainCharacter::OnPickUpIDCard()
+{
+	bIsHaveIDCard = true;
+}
+
+bool AMainCharacter::GetIsHaveIDCard()
+{
+	return bIsHaveIDCard;
+}

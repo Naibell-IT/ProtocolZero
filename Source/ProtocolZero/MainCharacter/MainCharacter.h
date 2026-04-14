@@ -11,6 +11,7 @@
 #include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
 #include "QuestSystem.h"
+#include "InteractComponent.h"
 #include "MainCharacter.generated.h"
 
 class UInputMappingContext;
@@ -42,7 +43,11 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 public:
 	UFUNCTION(BlueprintCallable, BlueprintPure)
-	float GetStamina();
+	FORCEINLINE float GetStamina();
+	UFUNCTION()
+	FORCEINLINE void OnPickUpIDCard();
+	UFUNCTION()
+	FORCEINLINE bool GetIsHaveIDCard();
 public:
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	UInputMappingContext* DefaultMappingContext;
@@ -56,11 +61,15 @@ public:
 	UInputAction* RunAction;
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	UInputAction* JumpAction;
+	UPROPERTY(EditDefaultsOnly, Category = "Input")
+	UInputAction* InteractAction;
 public:
 	UPROPERTY(EditDefaultsOnly)
 	UCameraComponent* Camera;
 	UPROPERTY(EditDefaultsOnly)
 	UQuestSystem* QuestSystemComponent;
+	UPROPERTY(EditDefaultsOnly)
+	UInteractComponent* InteractComponent;
 public:
 	UFUNCTION(BlueprintCallable)
 	void Move(const FInputActionValue& Value);
@@ -80,6 +89,8 @@ public:
 	void StartCrouch(const FInputActionValue& Value);
 	UFUNCTION(BlueprintCallable)
 	void StopCrouch(const FInputActionValue& Value);
+	UFUNCTION(BlueprintCallable)
+	void Interact(const FInputActionValue& Value);
 protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Movement Settings")
 	float DefaultWalkSpeed = 500;
@@ -118,10 +129,10 @@ private:
 	float targer_camera_z;
 	float current_camera_z;
 	float current_stamina;
+	bool bIsHaveIDCard = false;
 private:
 	FTimerHandle consumpt_stamina_handle;
 	FTimerHandle recovery_stamina_handle;
 	void ConsuptStamina();
 	void RecoveryStamina();
-
 };
