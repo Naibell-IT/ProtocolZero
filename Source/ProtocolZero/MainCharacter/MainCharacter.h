@@ -17,6 +17,8 @@
 class UInputMappingContext;
 class UInputAction;
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnUIExit);
+
 UENUM(BlueprintType)
 enum class EPlayerMovementState : uint8
 {
@@ -48,6 +50,10 @@ public:
 	FORCEINLINE void OnPickUpIDCard();
 	UFUNCTION()
 	FORCEINLINE bool GetIsHaveIDCard();
+	UFUNCTION(BlueprintCallable)
+	void BlockControl();
+	UFUNCTION(BlueprintCallable)
+	void UnblockControl();
 public:
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	UInputMappingContext* DefaultMappingContext;
@@ -63,6 +69,8 @@ public:
 	UInputAction* JumpAction;
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	UInputAction* InteractAction;
+	UPROPERTY(EditDefaultsOnly, Category = "Input")
+	UInputAction* ExitUIAction;
 public:
 	UPROPERTY(EditDefaultsOnly)
 	UCameraComponent* Camera;
@@ -70,6 +78,8 @@ public:
 	UQuestSystem* QuestSystemComponent;
 	UPROPERTY(EditDefaultsOnly)
 	UInteractComponent* InteractComponent;
+	UPROPERTY(BlueprintAssignable)
+	FOnUIExit OnUIExit;
 public:
 	UFUNCTION(BlueprintCallable)
 	void Move(const FInputActionValue& Value);
@@ -91,6 +101,8 @@ public:
 	void StopCrouch(const FInputActionValue& Value);
 	UFUNCTION(BlueprintCallable)
 	void Interact(const FInputActionValue& Value);
+	UFUNCTION(BlueprintCallable)
+	void ExitUI(const FInputActionValue& Value);
 protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Movement Settings")
 	float DefaultWalkSpeed = 500;
@@ -129,6 +141,7 @@ private:
 	float targer_camera_z;
 	float current_camera_z;
 	float current_stamina;
+	bool bIsControlBlocked = false;
 	bool bIsHaveIDCard = false;
 private:
 	FTimerHandle consumpt_stamina_handle;

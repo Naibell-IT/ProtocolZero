@@ -71,6 +71,8 @@ void AMainCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &AMainCharacter::StopJumping);
 
 		EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Completed, this, &AMainCharacter::Interact);
+
+		EnhancedInputComponent->BindAction(ExitUIAction, ETriggerEvent::Completed, this, &AMainCharacter::ExitUI);
 	}
 
 }
@@ -97,6 +99,8 @@ void AMainCharacter::Move(const FInputActionValue& Value)
 
 void AMainCharacter::StartMoving(const FInputActionValue& Value)
 {
+	if (bIsControlBlocked)
+		return;
 	if (APlayerController* PC = Cast<APlayerController>(GetController()))
 	{
 		if (movement_state == EPlayerMovementState::Running)
@@ -118,7 +122,7 @@ void AMainCharacter::Look(const FInputActionValue& Value)
 {
 	FVector2D look_vector = Value.Get<FVector2D>();
 
-	if (Controller)
+	if (Controller && !bIsControlBlocked)
 	{
 		AddControllerYawInput(look_vector.X);
 		AddControllerPitchInput(look_vector.Y);
@@ -127,7 +131,7 @@ void AMainCharacter::Look(const FInputActionValue& Value)
 
 void AMainCharacter::StartRunning(const FInputActionValue& Value)
 {
-	if (movement_state == EPlayerMovementState::Walking && current_stamina >= StaminaConsumptionPerCall)
+	if (movement_state == EPlayerMovementState::Walking && current_stamina >= StaminaConsumptionPerCall && !bIsControlBlocked)
 	{
 		movement_state = EPlayerMovementState::Running;
 		GetCharacterMovement()->MaxWalkSpeed = DefaultRunSpeed;
@@ -174,7 +178,7 @@ void AMainCharacter::StopRunning()
 
 void AMainCharacter::StartCrouch(const FInputActionValue& Value)
 {
-	if (movement_state == EPlayerMovementState::Walking && !GetCharacterMovement()->IsFalling())
+	if (movement_state == EPlayerMovementState::Walking && !GetCharacterMovement()->IsFalling() && !bIsControlBlocked)
 	{
 		movement_state = EPlayerMovementState::Crouching;
 		GetCharacterMovement()->MaxWalkSpeed = DefaultCrouchSpeed;
@@ -194,10 +198,15 @@ void AMainCharacter::StopCrouch(const FInputActionValue& Value)
 
 void AMainCharacter::Interact(const FInputActionValue& Value)
 {
-	if (InteractComponent)
+	if (InteractComponent && !bIsControlBlocked)
 	{
 		InteractComponent->OnInteract();
 	}
+}
+
+void AMainCharacter::ExitUI(const FInputActionValue& Value)
+{
+	OnUIExit.Broadcast();
 }
 
 void AMainCharacter::ConsuptStamina()
@@ -225,4 +234,14 @@ void AMainCharacter::OnPickUpIDCard()
 bool AMainCharacter::GetIsHaveIDCard()
 {
 	return bIsHaveIDCard;
+}
+
+void AMainCharacter::BlockControl()
+{
+	bIsControlBlocked = true;
+}
+
+void AMainCharacter::UnblockControl()
+{
+	bIsControlBlocked = false;
 }
