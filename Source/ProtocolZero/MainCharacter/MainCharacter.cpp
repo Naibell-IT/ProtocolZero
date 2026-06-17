@@ -131,7 +131,7 @@ void AMainCharacter::Look(const FInputActionValue& Value)
 
 void AMainCharacter::StartRunning(const FInputActionValue& Value)
 {
-	if (movement_state == EPlayerMovementState::Walking && current_stamina >= StaminaConsumptionPerCall && !bIsControlBlocked)
+	if (movement_state == EPlayerMovementState::Walking && current_stamina >= StaminaConsumptionPerCall && !bIsControlBlocked && !GetCharacterMovement()->IsFalling())
 	{
 		movement_state = EPlayerMovementState::Running;
 		GetCharacterMovement()->MaxWalkSpeed = DefaultRunSpeed;

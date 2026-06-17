@@ -18,12 +18,12 @@ void AComputer::BeginPlay()
 TArray<FMail> AComputer::GetMails()
 {
 	return Mails;
-}
+}	
 
 void AComputer::Interact_Implementation(const AActor* initiator)
 {
 	OnComputerOpen.Broadcast(Mails);
-}
+}	
 
 FString AComputer::GetThingDescription_Implementation()
 {
