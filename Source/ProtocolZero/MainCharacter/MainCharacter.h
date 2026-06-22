@@ -6,6 +6,7 @@
 #include "GameFramework/Character.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
+#include "Components/SpotLightComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
@@ -71,9 +72,13 @@ public:
 	UInputAction* InteractAction;
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	UInputAction* ExitUIAction;
+	UPROPERTY(EditDefaultsOnly, Category = "Input")
+	UInputAction* ToggleFlashlightAction;
 public:
 	UPROPERTY(EditDefaultsOnly)
 	UCameraComponent* Camera;
+	UPROPERTY(EditDefaultsOnly)
+	USpotLightComponent* Flashlight;
 	UPROPERTY(EditDefaultsOnly)
 	UQuestSystem* QuestSystemComponent;
 	UPROPERTY(EditDefaultsOnly)
@@ -103,6 +108,8 @@ public:
 	void Interact(const FInputActionValue& Value);
 	UFUNCTION(BlueprintCallable)
 	void ExitUI(const FInputActionValue& Value);
+	UFUNCTION(BlueprintCallable)
+	void ToggleFlashlight(const FInputActionValue& Value);
 protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Movement Settings")
 	float DefaultWalkSpeed = 500;
@@ -120,6 +127,8 @@ protected:
 	float StaminaConsumptionTimerDelay = 0.5f;
 	UPROPERTY(EditDefaultsOnly, Category = "Movement Settings")
 	float StaminaRecoveryTimerDelay = 0.5f;
+	UPROPERTY(EditDefaultsOnly, Category = "Flashlight Settings")
+	float FlashlightLagSpeed = 30;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Camera | Effects")
 	TSubclassOf<UCameraShakeBase> RunShakeClass;

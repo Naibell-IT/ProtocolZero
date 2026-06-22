@@ -19,6 +19,17 @@ AMainCharacter::AMainCharacter()
 
 	QuestSystemComponent = CreateDefaultSubobject<UQuestSystem>(TEXT("Quest System"));
 	InteractComponent = CreateDefaultSubobject<UInteractComponent>(TEXT("Interact Component"));
+	Flashlight = CreateDefaultSubobject<USpotLightComponent>(TEXT("Flashlight"));
+
+	if (Camera)
+	{
+		Flashlight->SetupAttachment(RootComponent);
+	}
+	
+	Flashlight->SetRelativeLocation(FVector::ZeroVector);
+	Flashlight->SetRelativeRotation(FRotator::ZeroRotator);
+	Flashlight->SetVisibility(false);
+	Flashlight->SetAbsolute(false, true, false);
 }
 
 void AMainCharacter::BeginPlay()
@@ -47,6 +58,17 @@ void AMainCharacter::Tick(float DeltaTime)
 	new_location.Z = current_camera_z;
 	Camera->SetRelativeLocation(new_location);
 
+	if (Camera && Flashlight && Flashlight->IsVisible())
+	{
+		FVector target_location = Camera->GetComponentLocation();
+		Flashlight->SetWorldLocation(target_location);
+
+		FRotator target_rotation = Camera->GetComponentRotation();
+		FRotator current_rotation = Flashlight->GetComponentRotation();
+
+		FRotator new_rotation = FMath::RInterpTo(current_rotation, target_rotation, DeltaTime, FlashlightLagSpeed);
+		Flashlight->SetWorldRotation(new_rotation);
+	}
 }
 
 void AMainCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -73,6 +95,8 @@ void AMainCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 		EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Completed, this, &AMainCharacter::Interact);
 
 		EnhancedInputComponent->BindAction(ExitUIAction, ETriggerEvent::Completed, this, &AMainCharacter::ExitUI);
+
+		EnhancedInputComponent->BindAction(ToggleFlashlightAction, ETriggerEvent::Completed, this, &AMainCharacter::ToggleFlashlight);
 	}
 
 }
@@ -207,6 +231,20 @@ void AMainCharacter::Interact(const FInputActionValue& Value)
 void AMainCharacter::ExitUI(const FInputActionValue& Value)
 {
 	OnUIExit.Broadcast();
+}
+
+void AMainCharacter::ToggleFlashlight(const FInputActionValue& Value)
+{
+	if (Flashlight)
+	{
+		if (!Flashlight->IsVisible())
+		{
+			FRotator camera_rotation = Camera->GetComponentRotation();
+			Flashlight->SetWorldRotation(camera_rotation);
+		}
+
+		Flashlight->ToggleVisibility();
+	}
 }
 
 void AMainCharacter::ConsuptStamina()
