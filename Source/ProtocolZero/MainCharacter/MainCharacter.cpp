@@ -30,6 +30,10 @@ AMainCharacter::AMainCharacter()
 	Flashlight->SetRelativeRotation(FRotator::ZeroRotator);
 	Flashlight->SetVisibility(false);
 	Flashlight->SetAbsolute(false, true, false);
+
+	HandsMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Hands"));
+	HandsMesh->SetupAttachment(Camera);
+	HandsMesh->SetVisibility(false);
 }
 
 void AMainCharacter::BeginPlay()
@@ -245,6 +249,34 @@ void AMainCharacter::ToggleFlashlight(const FInputActionValue& Value)
 
 		Flashlight->ToggleVisibility();
 	}
+}
+
+void AMainCharacter::SetPrimaryWeapon(AWeaponBase* weapon)
+{
+	primary_weapon = weapon;
+	current_weapon = weapon;
+	HandsMesh->SetVisibility(true);
+}
+
+void AMainCharacter::SetSecondaryWeapon(AWeaponBase* weapon)
+{
+	secondary_weapon = weapon;
+	current_weapon = weapon;
+}
+
+AWeaponBase* AMainCharacter::GetPrimaryWeapon()
+{
+	return primary_weapon;
+}
+
+AWeaponBase* AMainCharacter::GetSecondaryWeapon()
+{
+	return secondary_weapon;
+}
+
+AWeaponBase* AMainCharacter::GetCurrentWeapon()
+{
+	return current_weapon;
 }
 
 void AMainCharacter::ConsuptStamina()

@@ -2,11 +2,14 @@
 
 
 #include "Sparker.h"
+#include "../MainCharacter/MainCharacter.h"
+#include "Kismet/GameplayStatics.h"
 
 ASparker::ASparker()
 {
 	PrimaryActorTick.bCanEverTick = true;
 	WeaponMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("WeaponMesh"));
+	SocketName = FName(TEXT("WeaponSocket"));
 }
 
 void ASparker::BeginPlay()
@@ -23,6 +26,17 @@ void ASparker::Tick(float DeltaTime)
 
 void ASparker::Equip()
 {
+	if (AMainCharacter* character = Cast<AMainCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0)))
+	{
+		WeaponMesh->SetSimulatePhysics(false);
+
+		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+		FAttachmentTransformRules AttachmentRules(EAttachmentRule::SnapToTarget, true);
+		AttachToComponent(character->HandsMesh, AttachmentRules, SocketName);
+
+		character->SetPrimaryWeapon(this);
+	}
 }
 
 void ASparker::StartFire()

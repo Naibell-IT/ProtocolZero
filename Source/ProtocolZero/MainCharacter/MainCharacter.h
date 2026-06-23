@@ -13,6 +13,8 @@
 #include "InputActionValue.h"
 #include "QuestSystem.h"
 #include "InteractComponent.h"
+#include "Components/SkeletalMeshComponent.h"
+#include "../Weapons/WeaponBase.h"
 #include "MainCharacter.generated.h"
 
 class UInputMappingContext;
@@ -83,6 +85,8 @@ public:
 	UQuestSystem* QuestSystemComponent;
 	UPROPERTY(EditDefaultsOnly)
 	UInteractComponent* InteractComponent;
+	UPROPERTY(EditDefaultsOnly)
+	USkeletalMeshComponent* HandsMesh;
 	UPROPERTY(BlueprintAssignable)
 	FOnUIExit OnUIExit;
 public:
@@ -110,6 +114,17 @@ public:
 	void ExitUI(const FInputActionValue& Value);
 	UFUNCTION(BlueprintCallable)
 	void ToggleFlashlight(const FInputActionValue& Value);
+
+	UFUNCTION()
+	void SetPrimaryWeapon(AWeaponBase* weapon);
+	UFUNCTION()
+	void SetSecondaryWeapon(AWeaponBase* weapon);
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	AWeaponBase* GetPrimaryWeapon();
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	AWeaponBase* GetSecondaryWeapon();
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	AWeaponBase* GetCurrentWeapon();
 protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Movement Settings")
 	float DefaultWalkSpeed = 500;
@@ -152,6 +167,12 @@ private:
 	float current_stamina;
 	bool bIsControlBlocked = false;
 	bool bIsHaveIDCard = false;
+
+	AWeaponBase* primary_weapon;
+	AWeaponBase* secondary_weapon;
+
+	AWeaponBase* current_weapon;
+
 private:
 	FTimerHandle consumpt_stamina_handle;
 	FTimerHandle recovery_stamina_handle;
