@@ -6,6 +6,7 @@
 #include "GameFramework/Actor.h"
 #include "WeaponBase.h"
 #include "../Interfaces/Interactable.h"
+#include "../MainCharacter/MainCharacter.h"
 #include "Sparker.generated.h"
 
 UCLASS()
@@ -32,4 +33,7 @@ public:
 	void StartFire() override;
 	void EndFire() override;
 	void Reload() override;
+private:
+	AMainCharacter* player;
+	void CastTrace();
 };

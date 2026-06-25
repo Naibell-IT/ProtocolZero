@@ -21,6 +21,8 @@ class UInputMappingContext;
 class UInputAction;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnUIExit);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnActiveWeaponChange, AWeaponBase*, weapon_ptr);
+
 
 UENUM(BlueprintType)
 enum class EPlayerMovementState : uint8
@@ -29,8 +31,6 @@ enum class EPlayerMovementState : uint8
 	Running,
 	Crouching
 };
-
-
 UCLASS()
 class PROTOCOLZERO_API AMainCharacter : public ACharacter
 {
@@ -100,6 +100,8 @@ public:
 	USkeletalMeshComponent* HandsMesh;
 	UPROPERTY(BlueprintAssignable)
 	FOnUIExit OnUIExit;
+	UPROPERTY(BlueprintAssignable)
+	FOnActiveWeaponChange OnActiveWeaponChange;
 public:
 	UFUNCTION(BlueprintCallable)
 	void Move(const FInputActionValue& Value);
@@ -146,6 +148,8 @@ public:
 	AWeaponBase* GetSecondaryWeapon();
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	AWeaponBase* GetCurrentWeapon();
+	UFUNCTION()
+	void OnSigleFire();
 protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Movement Settings", BlueprintReadOnly)
 	float DefaultWalkSpeed = 500;
@@ -173,6 +177,8 @@ protected:
 	TSubclassOf<UCameraShakeBase> RunShakeClass;
 	UPROPERTY(EditDefaultsOnly, Category = "Camera | Effects")
 	TSubclassOf<UCameraShakeBase> WalkShakeClass;
+	UPROPERTY(EditDefaultsOnly, Category = "Camera | Effects")
+	TSubclassOf<UCameraShakeBase> SparkerFireShakeClass;
 
 	UPROPERTY()
 	UCameraShakeBase* ActiveRunShake;
@@ -188,6 +194,10 @@ protected:
 
 	UPROPERTY(EditAnywhere, Category = "Camera | Aiming")
 	float AimZoomSpeed = 12;
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon | Animations")
+	UAnimMontage* HipFireMontage;
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon | Animations")
+	UAnimMontage* AimFireMontage;
 
 private:
 	EPlayerMovementState movement_state;
@@ -211,4 +221,5 @@ private:
 	void ConsuptStamina();
 	void RecoveryStamina();
 	void EndAiming();
+	void SetCurrentWeapon(AWeaponBase* weapon);
 };

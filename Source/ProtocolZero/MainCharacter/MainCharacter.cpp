@@ -319,14 +319,15 @@ void AMainCharacter::Reload(const FInputActionValue& Value)
 void AMainCharacter::SetPrimaryWeapon(AWeaponBase* weapon)
 {
 	primary_weapon = weapon;
-	current_weapon = weapon;
+	SetCurrentWeapon(weapon);
+
 	HandsMesh->SetVisibility(true);
 }
 
 void AMainCharacter::SetSecondaryWeapon(AWeaponBase* weapon)
 {
 	secondary_weapon = weapon;
-	current_weapon = weapon;
+	SetCurrentWeapon(weapon);
 }
 
 AWeaponBase* AMainCharacter::GetPrimaryWeapon()
@@ -342,6 +343,27 @@ AWeaponBase* AMainCharacter::GetSecondaryWeapon()
 AWeaponBase* AMainCharacter::GetCurrentWeapon()
 {
 	return current_weapon;
+}
+
+void AMainCharacter::OnSigleFire()
+{
+	if (!HipFireMontage || !AimFireMontage)
+		return;
+
+	if (UAnimInstance* anim_instance = HandsMesh->GetAnimInstance())
+	{
+		if (!bIsAiming)
+			anim_instance->Montage_Play(HipFireMontage, 1);
+		else
+			anim_instance->Montage_Play(AimFireMontage, 1);
+
+		APlayerController* PC = Cast<APlayerController>(GetController());
+		if (PC)
+		{
+			if (current_weapon->WeaponType == EPlayerAvailableWeapons::Sparker)
+				PC->ClientStartCameraShake(SparkerFireShakeClass);
+		}
+	}
 }
 
 void AMainCharacter::ConsuptStamina()
@@ -367,6 +389,15 @@ void AMainCharacter::EndAiming()
 	{
 		bIsAiming = false;
 		GetCharacterMovement()->MaxWalkSpeed = DefaultWalkSpeed;
+	}
+}
+
+void AMainCharacter::SetCurrentWeapon(AWeaponBase* weapon)
+{
+	if (weapon)
+	{
+		current_weapon = weapon;
+		OnActiveWeaponChange.Broadcast(weapon);
 	}
 }
 

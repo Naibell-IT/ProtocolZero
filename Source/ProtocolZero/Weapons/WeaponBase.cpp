@@ -40,3 +40,13 @@ void AWeaponBase::Fire()
 void AWeaponBase::Reload()
 {
 }
+
+int32 AWeaponBase::GetCurrentAmmo()
+{
+	return CurrentFreeAmmo;
+}
+
+int32 AWeaponBase::GetClipAmmo()
+{
+	return CurrentClipAmmo;
+}
