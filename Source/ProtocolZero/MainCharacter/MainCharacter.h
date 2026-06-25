@@ -49,10 +49,15 @@ public:
 public:
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	FORCEINLINE float GetStamina();
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	FORCEINLINE EPlayerMovementState GetCurrentMovementState();
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	FORCEINLINE bool GetIsAiming();
 	UFUNCTION()
 	FORCEINLINE void OnPickUpIDCard();
 	UFUNCTION()
 	FORCEINLINE bool GetIsHaveIDCard();
+
 	UFUNCTION(BlueprintCallable)
 	void BlockControl();
 	UFUNCTION(BlueprintCallable)
@@ -76,6 +81,12 @@ public:
 	UInputAction* ExitUIAction;
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	UInputAction* ToggleFlashlightAction;
+	UPROPERTY(EditDefaultsOnly, Category = "Input")
+	UInputAction* FireAction;
+	UPROPERTY(EditDefaultsOnly, Category = "Input")
+	UInputAction* AimAction;
+	UPROPERTY(EditDefaultsOnly, Category = "Input")
+	UInputAction* ReloadAction;
 public:
 	UPROPERTY(EditDefaultsOnly)
 	UCameraComponent* Camera;
@@ -114,6 +125,16 @@ public:
 	void ExitUI(const FInputActionValue& Value);
 	UFUNCTION(BlueprintCallable)
 	void ToggleFlashlight(const FInputActionValue& Value);
+	UFUNCTION(BlueprintCallable)
+	void StartFire(const FInputActionValue& Value);
+	UFUNCTION(BlueprintCallable)
+	void EndFire(const FInputActionValue& Value);
+	UFUNCTION(BlueprintCallable)
+	void StartAiming(const FInputActionValue& Value);
+	UFUNCTION(BlueprintCallable)
+	void EndAimingAction(const FInputActionValue& Value);
+	UFUNCTION(BlueprintCallable)
+	void Reload(const FInputActionValue& Value);
 
 	UFUNCTION()
 	void SetPrimaryWeapon(AWeaponBase* weapon);
@@ -126,22 +147,25 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	AWeaponBase* GetCurrentWeapon();
 protected:
-	UPROPERTY(EditDefaultsOnly, Category = "Movement Settings")
+	UPROPERTY(EditDefaultsOnly, Category = "Movement Settings", BlueprintReadOnly)
 	float DefaultWalkSpeed = 500;
-	UPROPERTY(EditDefaultsOnly, Category = "Movement Settings")
+	UPROPERTY(EditDefaultsOnly, Category = "Movement Settings", BlueprintReadOnly)
 	float DefaultRunSpeed = 650;
-	UPROPERTY(EditDefaultsOnly, Category = "Movement Settings")
+	UPROPERTY(EditDefaultsOnly, Category = "Movement Settings", BlueprintReadOnly)
 	float DefaultCrouchSpeed = 300;
-	UPROPERTY(EditDefaultsOnly, Category = "Movement Settings")
+	UPROPERTY(EditDefaultsOnly, Category = "Movement Settings", BlueprintReadOnly)
 	float MaxStamina = 100;
-	UPROPERTY(EditDefaultsOnly, Category = "Movement Settings")
+	UPROPERTY(EditDefaultsOnly, Category = "Movement Settings", BlueprintReadOnly)
 	float StaminaConsumptionPerCall = 5.f;
-	UPROPERTY(EditDefaultsOnly, Category = "Movement Settings")
+	UPROPERTY(EditDefaultsOnly, Category = "Movement Settings", BlueprintReadOnly)
 	float StaminaRecoveryPerCall = 5;
-	UPROPERTY(EditDefaultsOnly, Category = "Movement Settings")
+	UPROPERTY(EditDefaultsOnly, Category = "Movement Settings", BlueprintReadOnly)
 	float StaminaConsumptionTimerDelay = 0.5f;
-	UPROPERTY(EditDefaultsOnly, Category = "Movement Settings")
+	UPROPERTY(EditDefaultsOnly, Category = "Movement Settings", BlueprintReadOnly)
 	float StaminaRecoveryTimerDelay = 0.5f;
+	UPROPERTY(EditDefaultsOnly, Category = "Movement Settings", BlueprintReadOnly)
+	float AimSlowing = 100;
+
 	UPROPERTY(EditDefaultsOnly, Category = "Flashlight Settings")
 	float FlashlightLagSpeed = 30;
 
@@ -159,18 +183,26 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Camera | Effects")
 	float CameraLeanSpeed = 5.0f;
 
+	UPROPERTY(EditAnywhere, Category = "Camera | Aiming")
+	float AimFOV = 65;
+
+	UPROPERTY(EditAnywhere, Category = "Camera | Aiming")
+	float AimZoomSpeed = 12;
+
 private:
 	EPlayerMovementState movement_state;
 	float default_camera_z;
 	float targer_camera_z;
 	float current_camera_z;
 	float current_stamina;
+	float default_fov = 90;
+
 	bool bIsControlBlocked = false;
 	bool bIsHaveIDCard = false;
+	bool bIsAiming = false;
 
 	AWeaponBase* primary_weapon;
 	AWeaponBase* secondary_weapon;
-
 	AWeaponBase* current_weapon;
 
 private:
@@ -178,4 +210,5 @@ private:
 	FTimerHandle recovery_stamina_handle;
 	void ConsuptStamina();
 	void RecoveryStamina();
+	void EndAiming();
 };

@@ -23,17 +23,13 @@ protected:
 public:	
 	virtual void Tick(float DeltaTime) override;
 
-
+protected:
 	void Equip() override;
-
-	void StartFire() override;
-
-	void EndFire() override;
-
 	void Fire() override;
-
-	void Reload() override;
-
 	virtual void Interact_Implementation(const AActor* initiator) override;
 	virtual FString GetThingDescription_Implementation() override;
+public:
+	void StartFire() override;
+	void EndFire() override;
+	void Reload() override;
 };

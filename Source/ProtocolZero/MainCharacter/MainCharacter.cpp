@@ -46,22 +46,17 @@ void AMainCharacter::BeginPlay()
 		}
 	}
 
-	current_camera_z = default_camera_z = Camera->GetRelativeLocation().Z;
+	if (Camera)
+	{
+		current_camera_z = default_camera_z = Camera->GetRelativeLocation().Z;
+		default_fov = Camera->FieldOfView;
+	}
+	
 }
 
 void AMainCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
-	bool is_running = !GetCharacterMovement()->Velocity.IsZero();
-	targer_camera_z = is_running ? (default_camera_z + RunCameraOffset) : default_camera_z;
-
-	current_camera_z = FMath::FInterpTo(current_camera_z, targer_camera_z, DeltaTime, CameraLeanSpeed);
-
-	FVector new_location = Camera->GetRelativeLocation();
-	new_location.Z = current_camera_z;
-	Camera->SetRelativeLocation(new_location);
-
 	if (Camera && Flashlight && Flashlight->IsVisible())
 	{
 		FVector target_location = Camera->GetComponentLocation();
@@ -73,6 +68,21 @@ void AMainCharacter::Tick(float DeltaTime)
 		FRotator new_rotation = FMath::RInterpTo(current_rotation, target_rotation, DeltaTime, FlashlightLagSpeed);
 		Flashlight->SetWorldRotation(new_rotation);
 	}
+	if (Camera)
+	{
+		bool is_running = !GetCharacterMovement()->Velocity.IsZero();
+		targer_camera_z = is_running ? (default_camera_z + RunCameraOffset) : default_camera_z;
+		current_camera_z = FMath::FInterpTo(current_camera_z, targer_camera_z, DeltaTime, CameraLeanSpeed);
+		FVector new_location = Camera->GetRelativeLocation();
+		new_location.Z = current_camera_z;
+		Camera->SetRelativeLocation(new_location);
+
+		float target_fov = bIsAiming ? AimFOV : default_fov;
+		float current_fov = Camera->FieldOfView;
+		float new_fov = FMath::FInterpTo(current_fov, target_fov, DeltaTime, AimZoomSpeed);
+		Camera->SetFieldOfView(new_fov);
+	}
+
 }
 
 void AMainCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -101,6 +111,14 @@ void AMainCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 		EnhancedInputComponent->BindAction(ExitUIAction, ETriggerEvent::Completed, this, &AMainCharacter::ExitUI);
 
 		EnhancedInputComponent->BindAction(ToggleFlashlightAction, ETriggerEvent::Completed, this, &AMainCharacter::ToggleFlashlight);
+
+		EnhancedInputComponent->BindAction(FireAction, ETriggerEvent::Started, this, &AMainCharacter::StartFire);
+		EnhancedInputComponent->BindAction(FireAction, ETriggerEvent::Completed, this, &AMainCharacter::EndFire);
+
+		EnhancedInputComponent->BindAction(AimAction, ETriggerEvent::Started, this, &AMainCharacter::StartAiming);
+		EnhancedInputComponent->BindAction(AimAction, ETriggerEvent::Completed, this, &AMainCharacter::EndAimingAction);
+
+		EnhancedInputComponent->BindAction(ReloadAction, ETriggerEvent::Started, this, &AMainCharacter::Reload);
 	}
 
 }
@@ -108,6 +126,16 @@ void AMainCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 float AMainCharacter::GetStamina()
 {
 	return current_stamina;
+}
+
+EPlayerMovementState AMainCharacter::GetCurrentMovementState()
+{
+	return movement_state;
+}
+
+bool AMainCharacter::GetIsAiming()
+{
+	return bIsAiming;
 }
 
 void AMainCharacter::Move(const FInputActionValue& Value)
@@ -162,6 +190,7 @@ void AMainCharacter::StartRunning(const FInputActionValue& Value)
 	if (movement_state == EPlayerMovementState::Walking && current_stamina >= StaminaConsumptionPerCall && !bIsControlBlocked && !GetCharacterMovement()->IsFalling())
 	{
 		movement_state = EPlayerMovementState::Running;
+		EndAiming();
 		GetCharacterMovement()->MaxWalkSpeed = DefaultRunSpeed;
 
 		if (APlayerController* PC = Cast<APlayerController>(GetController()))
@@ -251,6 +280,42 @@ void AMainCharacter::ToggleFlashlight(const FInputActionValue& Value)
 	}
 }
 
+void AMainCharacter::StartFire(const FInputActionValue& Value)
+{
+	if (current_weapon && movement_state != EPlayerMovementState::Running)
+	{
+		current_weapon->StartFire();
+	}
+}
+
+void AMainCharacter::EndFire(const FInputActionValue& Value)
+{
+	if (current_weapon && movement_state != EPlayerMovementState::Running)
+		current_weapon->EndFire();
+}
+
+void AMainCharacter::StartAiming(const FInputActionValue& Value)
+{
+	if (current_weapon && movement_state != EPlayerMovementState::Running)
+	{
+		GetCharacterMovement()->MaxWalkSpeed = DefaultWalkSpeed - AimSlowing;
+		bIsAiming = true;
+	}
+}
+
+void AMainCharacter::EndAimingAction(const FInputActionValue& Value)
+{
+	EndAiming();
+}
+
+void AMainCharacter::Reload(const FInputActionValue& Value)
+{
+	if (current_weapon && movement_state != EPlayerMovementState::Running)
+	{
+		current_weapon->Reload();
+	}
+}
+
 void AMainCharacter::SetPrimaryWeapon(AWeaponBase* weapon)
 {
 	primary_weapon = weapon;
@@ -294,6 +359,15 @@ void AMainCharacter::RecoveryStamina()
 		current_stamina = MaxStamina;
 	}
 	else current_stamina += StaminaRecoveryPerCall;
+}
+
+void AMainCharacter::EndAiming()
+{
+	if (current_weapon)
+	{
+		bIsAiming = false;
+		GetCharacterMovement()->MaxWalkSpeed = DefaultWalkSpeed;
+	}
 }
 
 void AMainCharacter::OnPickUpIDCard()

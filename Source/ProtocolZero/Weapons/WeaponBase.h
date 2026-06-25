@@ -41,8 +41,10 @@ protected:
 	FName SocketName;
 protected:
 	virtual void Equip();
+	virtual void Fire();
+public:
 	virtual void StartFire();
 	virtual void EndFire();
-	virtual void Fire();
 	virtual void Reload();
+
 };
