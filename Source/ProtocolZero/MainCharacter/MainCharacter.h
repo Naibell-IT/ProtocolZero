@@ -149,7 +149,9 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	AWeaponBase* GetCurrentWeapon();
 	UFUNCTION()
-	void OnSigleFire();
+	void OnSingleFire();
+	UFUNCTION()
+	float OnReload();
 protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Movement Settings", BlueprintReadOnly)
 	float DefaultWalkSpeed = 500;
@@ -194,10 +196,12 @@ protected:
 
 	UPROPERTY(EditAnywhere, Category = "Camera | Aiming")
 	float AimZoomSpeed = 12;
-	UPROPERTY(EditDefaultsOnly, Category = "Weapon | Animations")
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon | Sparker")
 	UAnimMontage* HipFireMontage;
-	UPROPERTY(EditDefaultsOnly, Category = "Weapon | Animations")
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon | Sparker")
 	UAnimMontage* AimFireMontage;
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon | Sparker")
+	UAnimMontage* ReloadMontage;
 
 private:
 	EPlayerMovementState movement_state;

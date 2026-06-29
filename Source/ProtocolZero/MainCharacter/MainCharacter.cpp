@@ -345,7 +345,7 @@ AWeaponBase* AMainCharacter::GetCurrentWeapon()
 	return current_weapon;
 }
 
-void AMainCharacter::OnSigleFire()
+void AMainCharacter::OnSingleFire()
 {
 	if (!HipFireMontage || !AimFireMontage)
 		return;
@@ -364,6 +364,16 @@ void AMainCharacter::OnSigleFire()
 				PC->ClientStartCameraShake(SparkerFireShakeClass);
 		}
 	}
+}
+
+float AMainCharacter::OnReload()
+{
+	if (!ReloadMontage)
+		return 0;
+
+	if (UAnimInstance* anim_instance = HandsMesh->GetAnimInstance())
+		return anim_instance->Montage_Play(ReloadMontage, 1);
+	return 0;
 }
 
 void AMainCharacter::ConsuptStamina()
